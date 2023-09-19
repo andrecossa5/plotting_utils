@@ -5,12 +5,9 @@ simple plots returning an Axes object.
 
 import numpy as np 
 import pandas as pd 
-import scanpy as sc
-
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D 
-import seaborn as sns 
 from statannotations.Annotator import Annotator 
 import textalloc as ta
 
@@ -68,7 +65,7 @@ def create_handles(categories, marker='o', colors=None, size=10, width=0.5):
 
 
 def add_cbar(x, palette='viridis', ax=None, label_size=7, ticks_size=5, 
-    vmin=None, vmax=None, label=None, layout='outside'):
+            vmin=None, vmax=None, label=None, layout='outside'):
     """
     Draw cbar on an axes object inset.
     """
@@ -100,8 +97,8 @@ def add_cbar(x, palette='viridis', ax=None, label_size=7, ticks_size=5,
 ##
 
 
-def add_legend(label=None, colors=None, ax=None, loc='center', artists_size=7, label_size=7, 
-    ticks_size=5, bbox_to_anchor=(0.5, 1.1), ncols=1, only_top='all'):
+def add_legend(label=None, colors=None, ax=None, loc='center', artists_size=7, 
+            label_size=7, ticks_size=5, bbox_to_anchor=(0.5, 1.1), ncols=1, only_top='all'):
     """
     Draw a legend on axes object.
     """
@@ -123,8 +120,10 @@ def add_wilcox(df, x, y, pairs, ax, order=None):
     Add statisticatl annotations.
     """
     annotator = Annotator(ax, pairs, data=df, x=x, y=y, order=order)
-    annotator.configure(test='Mann-Whitney', text_format='star', show_test_name=False,
-        line_height=0.001, text_offset=3)
+    annotator.configure(
+        test='Mann-Whitney', text_format='star', show_test_name=False,
+        line_height=0.001, text_offset=3
+    )
     annotator.apply_and_annotate()
 
 
@@ -183,10 +182,10 @@ def find_n_rows_n_cols(n_axes, n_cols=None):
 ##
 
 
-def format_ax(ax, title='', xlabel='', ylabel='', 
-    xticks=None, yticks=None, rotx=0, roty=0, 
-    xlabel_size=None, ylabel_size=None, xticks_size=None, 
-    yticks_size=None, title_size=None, log=False
+def format_ax(
+    ax, title='', xlabel='', ylabel='', xticks=None, yticks=None, rotx=0, roty=0, 
+    xlabel_size=None, ylabel_size=None, xticks_size=None, yticks_size=None, 
+    title_size=None, log=False, reduce_spines=False, hgrid=False
     ):
     """
     Format labels, ticks and stuff.
@@ -218,6 +217,12 @@ def format_ax(ax, title='', xlabel='', ylabel='',
 
     if title_size is not None:
         ax.set_title(title, fontdict={'fontsize': title_size})
+    
+    if reduce_spines:
+        ax.spines[['right', 'top']].set_visible(False)
+    
+    if hgrid:
+        ax.grid(axis='y')
 
     return ax
 
@@ -249,7 +254,7 @@ def line(df, x, y, c='r', s=1, l=None, ax=None):
 ##
 
 
-def scatter(df, x, y, by=None, c='r', s=1.0, a=1, l=None, ax=None, scale_x=None, 
+def scatter(df, x, y, by=None, c='r', marker='.', s=1.0, a=1, l=None, ax=None, scale_x=None, 
             vmin=None, vmax=None, ordered=False):
     """
     Base scatter plot.
@@ -258,7 +263,6 @@ def scatter(df, x, y, by=None, c='r', s=1.0, a=1, l=None, ax=None, scale_x=None,
 
     if ordered and df[by].dtype == 'category':
         try:
-            categories = df[by].cat.categories
             df = df.sort_values(by)
         except:
             raise ValueError('Ordered is not a pd.Categorical')
@@ -267,21 +271,24 @@ def scatter(df, x, y, by=None, c='r', s=1.0, a=1, l=None, ax=None, scale_x=None,
         size = size * scale_x
 
     if isinstance(c, str) and by is None:
-        ax.scatter(df[x], df[y], color=c, label=l, marker='.', s=size, alpha=a)
+        ax.scatter(df[x], df[y], color=c, label=l, marker=marker, s=size, alpha=a)
 
     elif isinstance(c, str) and by is not None:
         
         vmin = vmin if vmin is not None else np.percentile(df[by],25)
         vmax = vmax if vmax is not None else np.percentile(df[by],75)
-        ax.scatter(df[x], df[y], c=df[by], cmap=c, vmin=vmin, vmax=vmax, label=l, marker='.', s=size, alpha=a)
+        ax.scatter(
+            df[x], df[y], c=df[by], cmap=c, marker=marker, vmin=vmin, 
+            vmax=vmax, label=l, s=size, alpha=a
+        )
 
     elif isinstance(c, dict) and by is not None:
         assert all([ x in c for x in df[by].unique() ])
         colors = [ c[x] for x in df[by] ]
-        ax.scatter(df[x], df[y], c=colors, label=l, marker='.', s=size, alpha=a)
+        ax.scatter(df[x], df[y], c=colors, label=l, marker=marker, s=size, alpha=a)
 
     else:
-        raise ValueError('c needs to be specified as a dict of colors with "by" of a single color.')
+        raise ValueError('c needs to be specified as a dict ("by") or a single str color.')
 
     return ax
 
@@ -347,9 +354,8 @@ def bar(df, y, x=None, by=None, c='grey', s=0.35, a=1, l=None, ax=None, annot_si
 ##
 
 
-
 def box(df, x, y, by=None, c=None, a=1, l=None, ax=None, with_stats=False, 
-    pairs=None, order=None, kwargs={}):
+        pairs=None, order=None, kwargs={}):
     """
     Base box plot.
     """
@@ -393,8 +399,8 @@ def box(df, x, y, by=None, c=None, a=1, l=None, ax=None, with_stats=False,
 ##
 
 
-def strip(df, x, y, by=None, c=None, a=1, l=None, s=5, ax=None, with_stats=False, order=None, pairs=None):
-
+def strip(df, x, y, by=None, c=None, a=1, l=None, s=5, ax=None, with_stats=False, 
+        order=None, pairs=None):
     """
     Base stripplot.
     """
@@ -431,7 +437,8 @@ def strip(df, x, y, by=None, c=None, a=1, l=None, s=5, ax=None, with_stats=False
 ##
 
 
-def violin(df, x, y, by=None, c=None, a=1, l=None, ax=None, with_stats=False, order=None, pairs=None):
+def violin(df, x, y, by=None, c=None, a=1, l=None, ax=None, with_stats=False,
+        order=None, pairs=None):
     """
     Base violinplot.
     """
@@ -472,9 +479,11 @@ def violin(df, x, y, by=None, c=None, a=1, l=None, ax=None, with_stats=False, or
 ##
 
 
-def plot_heatmap(df, palette='mako', ax=None, title=None, x_names=True, y_names=True, 
-    x_names_size=7, y_names_size=7, xlabel=None, ylabel=None, annot=False, annot_size=5, 
-    label=None, shrink=1.0, cb=True):
+def plot_heatmap(
+    df, palette='mako', ax=None, title=None, x_names=True, y_names=True, 
+    x_names_size=7, y_names_size=7, xlabel=None, ylabel=None, annot=False, 
+    annot_size=5, label=None, shrink=1.0, cb=True
+    ):
     """
     Simple heatmap.
     """
@@ -550,7 +559,8 @@ def bb_plot(df, cov1=None, cov2=None, show_y=True, legend=True, colors=None,
 ##
 
 
-def rank_plot(df, cov=None, ascending=False, n_annotated=25, title=None, ylabel=None, ax=None, fig=None):
+def rank_plot(df, cov=None, ascending=False, n_annotated=25, title=None,
+            ylabel=None, ax=None, fig=None):
     """
     Annotated scatterplot.
     """

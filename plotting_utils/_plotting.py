@@ -1,5 +1,5 @@
 """
-_plotting.py stores heatmap and splightly more elaborate plots.
+_plotting.py stores heatmap and slightly more elaborate plots. Ongoing effort.
 """
 
 from ._colors import *
