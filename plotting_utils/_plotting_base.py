@@ -296,18 +296,24 @@ def scatter(df, x, y, by=None, c='r', marker='.', s=1.0, a=1, l=None, ax=None, s
 ##
 
 
-def hist(df, x, n=10, by=None, c='r', a=1, l=None, ax=None, density=False):
+def hist(df, x, n=10, by=None, c='r', a=1, l=None, ax=None, linewidth=2, density=False):
     """
     Basic histogram plot.
     """
     if by is None:
-       ax.hist(df[x], bins=n, color=c, alpha=a, label=l, density=density)
+        ax.hist(df[x], bins=n, color=c, alpha=a, label=l)
+        if density:
+            sns.kdeplot(df, x=x, color=c, ax=ax, linewidth=linewidth)
+
     elif by is not None and isinstance(c, dict):
         categories = df[by].unique()
         if all([ cat in list(c.keys()) for cat in categories ]):
             for cat in categories:
                 df_ = df.loc[df[by] == cat, :]
-                ax.hist(df_[x], bins=n, color=c[cat], alpha=a, label=x, density=density)
+                ax.hist(df_[x], bins=n, color=c[cat], alpha=a, label=x)
+                if density:
+                    sns.kdeplot(df, x=x, color=c[cat], ax=ax, linewidth=linewidth)
+
     else:
         raise ValueError(f'{by} categories do not match provided colors keys')
 
@@ -354,41 +360,44 @@ def bar(df, y, x=None, by=None, c='grey', s=0.35, a=1, l=None, ax=None, annot_si
 ##
 
 
-def box(df, x, y, by=None, c=None, a=1, l=None, ax=None, with_stats=False, 
-        pairs=None, order=None, kwargs={}):
+def box(df, x, y, by=None, c='grey', alpha=.7, ax=None, with_stats=False,
+    pairs=None, order=None, hue_order=None, kwargs={}):
     """
     Base box plot.
     """
 
     params = {   
-            'showcaps' : True,
-            'fliersize': 0,
-            'boxprops' : {'edgecolor': 'black', 'linewidth': 0.3}, 
-            'medianprops': {"color": "black", "linewidth": 1},
-            'whiskerprops':{"color": "black", "linewidth": 1}
+        'showcaps' : False,
+        'fliersize': 0,
+        'boxprops' : {'edgecolor': 'black', 'linewidth': .8}, 
+        'medianprops': {"color": "black", "linewidth": 1.5},
+        'whiskerprops':{"color": "black", "linewidth": 1.2}
     }
 
     params = update_params(params, kwargs)
     
-    if isinstance(c, str):
-        ax = sns.boxplot(data=df, x=x, y=y, color=c, ax=ax, saturation=0.7, order=order, **params) 
+    if isinstance(c, str) and by is None:
+        sns.boxplot(data=df, x=x, y=y, color=c, ax=ax, saturation=alpha, order=order, **params) 
         ax.set(xlabel='')
 
     elif isinstance(c, dict) and by is None:
         if all([ True if k in df[x].unique() else False for k in c.keys() ]):
-
-            ax = sns.boxplot(data=df, x=x, y=y, palette=c.values(), ax=ax, saturation=0.7, order=order, **params)
+            sns.boxplot(data=df, x=x, y=y, palette=c.values(), ax=ax, saturation=alpha, order=order, **params)
             ax.set(xlabel='')
         else:
             raise ValueError(f'{by} categories do not match provided colors keys')
             
     elif isinstance(c, dict) and by is not None:
         if all([ True if k in df[by].unique() else False for k in c.keys() ]):
-            ax = sns.boxplot(data=df, x=x, y=y, palette=c.values(), hue=by, ax=ax, saturation=a, **params)
+            sns.boxplot(data=df, x=x, y=y, palette=c.values(), hue=by, hue_order=hue_order, ax=ax, saturation=alpha, **params)
             ax.legend([], [], frameon=False)
             ax.set(xlabel='')
         else:
             raise ValueError(f'{by} categories do not match provided colors keys')
+    elif isinstance(c, str) and by is not None:
+        sns.boxplot(data=df, x=x, y=y, hue=by, hue_order=hue_order, ax=ax, saturation=alpha, **params)
+        ax.legend([], [], frameon=False)
+        ax.set(xlabel='')
 
     if with_stats:
         add_wilcox(df, x, y, pairs, ax, order=order)
@@ -399,11 +408,13 @@ def box(df, x, y, by=None, c=None, a=1, l=None, ax=None, with_stats=False,
 ##
 
 
-def strip(df, x, y, by=None, c=None, a=1, l=None, s=5, ax=None, with_stats=False, 
-        order=None, pairs=None):
+def strip(df, x, y, by=None, c=None, a=1, l=None, s=5, ax=None, with_stats=False, order=None, pairs=None):
+
     """
     Base stripplot.
     """
+    np.random.seed(123)
+    
     if isinstance(c, str):
         ax = sns.stripplot(data=df, x=x, y=y, color=c, ax=ax, size=s, order=order) 
         ax.set(xlabel='')
@@ -421,8 +432,7 @@ def strip(df, x, y, by=None, c=None, a=1, l=None, s=5, ax=None, with_stats=False
             
     elif isinstance(c, dict) and by is not None:
         if all([ True if k in df[by].unique() else False for k in c.keys() ]):
-            ax = sns.stripplot(data=df, x=x, y=y, palette=c.values(), hue=by, 
-                ax=ax, size=s)
+            ax = sns.stripplot(data=df, x=x, y=y, palette=c.values(), hue=by, ax=ax, size=s, order=order)
             ax.legend([], [], frameon=False)
             ax.set(xlabel='')    
         else:
@@ -437,8 +447,7 @@ def strip(df, x, y, by=None, c=None, a=1, l=None, s=5, ax=None, with_stats=False
 ##
 
 
-def violin(df, x, y, by=None, c=None, a=1, l=None, ax=None, with_stats=False,
-        order=None, pairs=None):
+def violin(df, x, y, by=None, c=None, alpha=.7, ax=None, with_stats=False, order=None, pairs=None):
     """
     Base violinplot.
     """
@@ -451,18 +460,18 @@ def violin(df, x, y, by=None, c=None, a=1, l=None, ax=None, with_stats=False,
     }
     
     if isinstance(c, str):
-        ax = sns.violinplot(data=df, x=x, y=y, color=c, ax=ax, saturation=0.7, order=order, **params) 
+        ax = sns.violinplot(data=df, x=x, y=y, color=c, ax=ax, saturation=alpha, order=order, **params) 
         ax.set(xlabel='', ylabel='')
         ax.set_xticklabels(np.arange(df[x].unique().size))
 
     elif isinstance(c, dict) and by is None:
-        ax = sns.violinplot(data=df, x=x, y=y, palette=c.values(), ax=ax, saturation=0.7, order=order, **params)
+        ax = sns.violinplot(data=df, x=x, y=y, palette=c.values(), ax=ax, saturation=alpha, order=order, **params)
         ax.set(xlabel='', ylabel='') 
         ax.set_xticklabels(np.arange(df[x].unique().size))
             
     elif isinstance(c, dict) and by is not None:
         ax = sns.violinplot(data=df, x=x, y=y, palette=c.values(), hue=by, 
-            ax=ax, saturation=0.7, **params)
+            ax=ax, saturation=alpha, **params)
         ax.legend([], [], frameon=False)
         ax.set(xlabel='', ylabel='')
         ax.set_xticklabels(np.arange(df[x].unique().size))
@@ -479,17 +488,21 @@ def violin(df, x, y, by=None, c=None, a=1, l=None, ax=None, with_stats=False,
 ##
 
 
-def plot_heatmap(
-    df, palette='mako', ax=None, title=None, x_names=True, y_names=True, 
-    x_names_size=7, y_names_size=7, xlabel=None, ylabel=None, annot=False, 
-    annot_size=5, label=None, shrink=1.0, cb=True
-    ):
+def plot_heatmap(df, palette='mako', ax=None, title=None, x_names=True, y_names=True, 
+    x_names_size=7, y_names_size=7, xlabel=None, ylabel=None, annot=False, annot_size=5, 
+    label=None, shrink=1.0, cb=True, vmin=None, vmax=None, rank_diagonal=False):
     """
     Simple heatmap.
     """
+    if rank_diagonal:
+        row_order = np.sum(df>0, axis=1).sort_values()[::-1].index
+        col_order = df.mean(axis=0).sort_values()[::-1].index
+        df = df.loc[row_order, col_order]
+        
     ax = sns.heatmap(data=df, ax=ax, robust=True, cmap=palette, annot=annot, xticklabels=x_names, 
         yticklabels=y_names, fmt='.2f', annot_kws={'size':annot_size}, cbar=cb,
-        cbar_kws={'fraction':0.05, 'aspect':35, 'pad': 0.02, 'shrink':shrink, 'label':label}
+        cbar_kws={'fraction':0.05, 'aspect':35, 'pad': 0.02, 'shrink':shrink, 'label':label},
+        vmin=vmin, vmax=vmax
     )
     ax.set(title=title, xlabel=xlabel, ylabel=ylabel)
     ax.set_xticklabels(ax.get_xticklabels(), fontsize=x_names_size)
