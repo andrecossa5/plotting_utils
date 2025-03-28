@@ -1,5 +1,5 @@
 """
-_utils.py stores some general purpose function and classes.
+utils.py stores some general purpose function and classes.
 """
 
 import os 
