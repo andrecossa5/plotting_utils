@@ -2,6 +2,8 @@
 Plotting utilities and 'base plots', i.e., simple plots returning an Axes object.
 """
 
+import matplotlib.axes
+import matplotlib.figure
 import numpy as np 
 import pandas as pd 
 import matplotlib
@@ -41,7 +43,7 @@ axins_pos = {
 ##
 
 
-def set_rcParams():
+def set_rcParams(params={}):
     """
     Applies Nature Methods journal-style settings for matplotlib figures.
     """
@@ -59,7 +61,7 @@ def set_rcParams():
         # Axes properties
         'axes.titlesize': 10,           # Title font size
         'axes.labelsize': 10,           # Label font size
-        'axes.linewidth': 0.5,         # Minimum line width for axes
+        'axes.linewidth': 0.5,          # Minimum line width for axes
 
         # Tick properties
         'xtick.labelsize': 8,
@@ -80,6 +82,7 @@ def set_rcParams():
         'lines.linewidth': 1,          # Line width for main data elements
         'lines.markersize': 4,         # Marker size
     })
+    plt.rcParams.update(params)
 
 
 ##
@@ -182,6 +185,7 @@ def add_legend(
     loc: str = 'upper left', 
     bbox_to_anchor: Tuple[float,float] = (1, 1), 
     artists_size: float = 10, 
+    frameon: bool = False,
     label_size: float = None, 
     ticks_size: float = None, 
     ncols: int = 1, 
@@ -205,6 +209,8 @@ def add_legend(
         bbox_to_anchor kwarg from ax.legend(). Which ax box to anchor. Default is (1,1)
     artists_size: float, optional
         Size of artists. Default is 10
+    frameon: bool, optional
+        Frame legend. Default is False
     label_size: float, optional
         Legend title size. Default is None
     ticks_size: float, optional
@@ -230,7 +236,7 @@ def add_legend(
     legend = ax.legend(
         handles, 
         colors.keys(), 
-        frameon=False, 
+        frameon=frameon, 
         loc=loc, 
         fontsize=ticks_size, 
         title_fontsize=label_size, 
@@ -375,7 +381,8 @@ def scatter(
     ax: matplotlib.axes.Axes = None, 
     scale_x: float = None, 
     vmin: float = None, 
-    vmax: float = None
+    vmax: float = None,
+    kwargs: Dict[str,Any] = {}
     ) -> matplotlib.axes.Axes:
     """
     Base scatter plot.
@@ -397,7 +404,7 @@ def scatter(
 
     # Handle colors and by
     if by is None:
-        ax.scatter(x, y, c=color, marker=marker, s=s, alpha=alpha)
+        ax.scatter(x, y, c=color, marker=marker, s=s, alpha=alpha, **kwargs)
 
     elif by is not None and by in df.columns:
         
@@ -414,7 +421,7 @@ def scatter(
             ax.scatter(
                 x, y, 
                 c=colors,
-                marker=marker, s=s, alpha=alpha 
+                marker=marker, s=s, alpha=alpha, **kwargs
             )
 
         # Numeric
@@ -425,7 +432,7 @@ def scatter(
             ax.scatter(
                 x, y, 
                 c=df[by], cmap=continuous_cmap, vmin=vmin, vmax=vmax, 
-                marker=marker, s=s, alpha=alpha 
+                marker=marker, s=s, alpha=alpha, **kwargs
             )
 
         else:
@@ -497,7 +504,7 @@ def counts_plot(
     df: pd.DataFrame, 
     x: str, 
     width: float = .8, 
-    alpha: float = .5, 
+    alpha: float = .8, 
     color: str = '#105D62', 
     edgecolor: str = 'k', 
     linewidth: float = .5, 
@@ -522,7 +529,7 @@ def counts_plot(
     if with_label:
         ax.bar_label(ax.containers[0], padding=0, fontsize=label_size)
     
-    ax.set(xlabel='Value', ylabel='n')
+    format_ax(ax=ax, xlabel='Value', ylabel='n', xticks=counts.index)
 
     return ax
 
@@ -543,7 +550,10 @@ def bar(
     width: float|str = .8, 
     linewidth: float = .5,
     alpha: float = .8, 
+    with_label: bool = False,
+    fmt: str = '%d',
     ax: matplotlib.axes.Axes = None, 
+    kwargs: Dict[str,Any] = {}
     ) -> matplotlib.axes.Axes:
     """
     Basic bar plot.
@@ -555,7 +565,11 @@ def bar(
             data=df, x=x, y=y, ax=ax, 
             order=x_order, 
             color=color,
-            width=width, alpha=alpha, edgecolor=edgecolor, linewidth=linewidth
+            width=width,
+            alpha=alpha, 
+            edgecolor=edgecolor,
+            linewidth=linewidth,
+            **kwargs
         )
         
     elif by is not None and by in df.columns:
@@ -573,7 +587,11 @@ def bar(
                 data=df, x=x, y=y, ax=ax, 
                 order=x_order, 
                 hue=by, hue_order=by_order, palette=_cmap,
-                width=width, alpha=alpha, edgecolor=edgecolor, linewidth=linewidth
+                width=width,
+                alpha=alpha, 
+                edgecolor=edgecolor,
+                linewidth=linewidth,
+                **kwargs
             )
             ax.get_legend().remove()
 
@@ -582,6 +600,9 @@ def bar(
     
     else:
         raise KeyError(f'{by} not in df.columns!')
+
+    if with_label:
+        ax.bar_label(ax.containers[0], padding=0, fmt=fmt)
 
     return ax
 
@@ -678,6 +699,7 @@ def strip(
     by_order: Iterable[str] = None,
     size: float|str = 5, 
     ax: matplotlib.axes.Axes = None, 
+    kwargs: Dict[str,Any] = {}
     ) -> matplotlib.axes.Axes:
     """
     Base stripplot.
@@ -693,7 +715,8 @@ def strip(
             color=color,
             edgecolor=edgecolor,
             linewidth=linewidth,
-            size=size
+            size=size,
+            **kwargs
         )
         
     elif by is not None and by in df.columns:
@@ -714,7 +737,8 @@ def strip(
                 hue=by, hue_order=by_order, palette=_cmap,
                 edgecolor=edgecolor,
                 linewidth=linewidth,
-                size=size
+                size=size,
+                **kwargs
             )
             ax.get_legend().remove()
 
@@ -936,24 +960,148 @@ def bb_plot(
     )
     
     return ax
-    
+
 
 ##
 
 
-def rank_plot(df, cov=None, ascending=False, n_annotated=25, title=None,
-            ylabel=None, ax=None, fig=None):
+def dotplot(
+    df, 
+    x: str = None, 
+    y: str = None, 
+    order_x: Iterable[str] = None, 
+    order_y: Iterable[str] = None, 
+    color: str = None, 
+    size: str = None, 
+    palette: str = 'afmhot_r', 
+    ax: matplotlib.axes.Axes = None, 
+    vmin: float = None, 
+    vmax: float = None,
+    ) -> matplotlib.axes.Axes:
     """
-    Annotated scatterplot.
+    Basic dotplot.
     """
-    s = df[cov].sort_values(ascending=ascending)
-    x = np.arange(df.shape[0])
-    y = s.values
-    labels = s[:n_annotated].index
-    ax.plot(x, y, '.')
-    ta.allocate_text(fig, ax, x[:n_annotated], y[:n_annotated], labels, x_scatter=x, y_scatter=y,
-        linecolor='black', textsize=8, max_distance=0.5, linewidth=0.5, nbr_candidates=100)
-    format_ax(ax, title=title, xlabel='rank', ylabel=ylabel)
+
+    df[x] = pd.Categorical(df[x].astype('str'), categories=order_x)
+    df[y] = pd.Categorical(df[y].astype('str'), categories=order_y)
+
+    sns.scatterplot(data=df, 
+                    x=x, y=y, 
+                    size=size, 
+                    hue=color, 
+                    palette=palette, 
+                    ax=ax, 
+                    hue_norm=matplotlib.colors.Normalize(vmin=vmin, vmax=vmax, clip=True),
+                    sizes=(.001, 100), 
+                    edgecolor='k'
+                    )
+    
+    ax.get_legend().set_bbox_to_anchor((1,1))
+    ax.get_legend().set_frame_on(False)
+
+    return ax
+
+
+##
+
+
+def volcano(
+    df: pd.DataFrame, 
+    x: str = 'log2FC', 
+    y: str = '-log10p', 
+    xlim: Tuple[float, float] = (-2.5,2.5), 
+    ylim: float = 2, 
+    cmap: Dict[str, str|Any] = None, 
+    ax: matplotlib.axes.Axes = None,
+    fig: matplotlib.figure =None,
+    kwargs_labelled: Dict[str, str|Any] = {}, 
+    kwargs_others: Dict[str, str|Any] = {},
+    kwargs_text: Dict[str, str|Any] = {}
+    ) -> matplotlib.axes.Axes: 
+    """
+    Volcano plot, with annotated obs.
+    """
+
+    params_labelled = {
+        'c':cmap['labelled'] if cmap is not None else 'r', 
+        's':50, 'edgecolor':'k', 'linewidths':.5
+    }
+    params_others = {
+        'c':cmap['others'] if cmap is not None else None, 
+        's':2, 'alpha':.5
+    } 
+    params_text = {
+        'linecolor':'black', 
+        'textsize':8,
+        'min_distance':0, 
+        'max_distance':0.05, 
+        'linewidth':0, 
+        'nbr_candidates':100
+    }
+    params_labelled = update_params(params_labelled, kwargs_labelled)
+    params_others = update_params(params_others, kwargs_others)
+    params_text = update_params(params_text, kwargs_text)
+
+    x_ = df[x].copy()
+    y_ = df[y].copy()
+    labels = list( 
+        set(x_[(x_<=xlim[0]) | (x_>=xlim[1])].index) & \
+        set(y_[y_>=ylim].index) 
+    )
+    test = x_.index.isin(labels)
+    ax.scatter(x_.loc[~test], y_.loc[~test], marker='o', **params_others)
+    ax.scatter(x_.loc[labels], y_.loc[labels], marker='o', **params_labelled)
+
+    ta.allocate_text(
+        fig, ax, 
+        x_.loc[labels], y_.loc[labels], labels, 
+        x_scatter=x_, y_scatter=y_,
+        **params_text
+    )
+    format_ax(ax=ax, xlabel=x, ylabel=y, reduced_spines=True)
+
+    return ax
+
+
+##
+
+
+def rank_plot(
+    df: pd.DataFrame, 
+    cov: str = None, 
+    color: str = None,
+    ascending: bool = False, 
+    n_annotated: int = 25, 
+    ax: matplotlib.axes.Axes = None, 
+    fig: matplotlib.figure = None,
+    kwargs_text : Dict[str, str|Any]= {}
+    ) -> matplotlib.axes.Axes:
+    """
+    Rank plot.
+    """
+
+    params_text = {
+        'linecolor':'black', 
+        'textsize':8,
+        'min_distance':0, 
+        'max_distance':0.05, 
+        'linewidth':0, 
+        'nbr_candidates':100
+    }
+    params_text = update_params(params_text, kwargs_text)
+
+    x_ = np.arange(df.shape[0])
+    y_ = df[cov].sort_values(ascending=ascending)
+    labels = y_.head(n_annotated).index
+
+    ax.scatter(x_, y_, 'o', c=color)
+    ta.allocate_text(
+        fig, ax, 
+        x_.loc[labels], y_.loc[labels], labels, 
+        x_scatter=x_, y_scatter=y_,
+        **params_text
+    )
+    format_ax(ax, xlabel='rank', ylabel=cov)
 
     return ax
 

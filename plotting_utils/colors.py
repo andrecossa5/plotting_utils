@@ -50,6 +50,7 @@ def create_palette(
     df: pd.DataFrame, 
     var: str, 
     palette: str = None, 
+    order: Iterable[str|Any] = None, 
     saturation: float = None, 
     col_list: Iterable[str|Any] = None, 
     lightness: float = None,
@@ -66,6 +67,8 @@ def create_palette(
             Column in df to search for categories 
         palette: str, optional
             Color palette from seaborn. Default is None
+        order: list, optional
+            Order of final color keys. Default is None
         col_list: Iterable[str|Any], optional
             Color list. Must be values recognized by matplotlib. Default is None
         saturation: float, optional
@@ -81,8 +84,14 @@ def create_palette(
             mapping of category : color
     """
 
-
-    cats = df[var].unique()
+    if order is None:
+        try: 
+            cats = df[var].cat.categories
+        except:
+            cats = df[var].unique()
+    else:
+        cats = order
+        
     n = len(cats)
     
     if col_list is not None:
