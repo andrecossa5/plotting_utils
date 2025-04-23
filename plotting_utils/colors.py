@@ -13,22 +13,15 @@ import numpy as np
 ##
 
 
-# Custom palette
-ten_godisnot = [
-
-    '#001E09', 
-    '#885578',
-    '#FF913F', 
-    '#1CE6FF', 
-    '#549E79', 
-    '#C9E850',
-    '#EEC3FF', 
-    '#FFEF00',
-    '#D157A0', 
-    '#922329'
-    
-]
+# Custom palettes
+ten_godisnot = ['#001E09', '#885578', '#FF913F', '#1CE6FF', '#549E79', '#C9E850','#EEC3FF', '#FFEF00', '#D157A0', '#922329']
 ten_godisnot = [ matplotlib.colors.hex2color(x) for x in ten_godisnot ]
+
+# From Buencolors/wesanderson R packages
+darjeeling = ["#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"]
+darjeeling = [ matplotlib.colors.hex2color(x) for x in darjeeling ]
+fantastic_fox = ["#DD8D29", "#E2D200", "#46ACC8", "#E58601", "#B40F20"]
+fantastic_fox = [ matplotlib.colors.hex2color(x) for x in fantastic_fox ]
 
 
 ##

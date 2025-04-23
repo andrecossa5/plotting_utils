@@ -14,7 +14,7 @@ from matplotlib.lines import Line2D
 from statannotations.Annotator import Annotator 
 from sklearn.metrics.pairwise import pairwise_distances
 from scipy.cluster.hierarchy import linkage, leaves_list
-from typing import Dict, Iterable, Any, Tuple
+from typing import Dict, Iterable, Any, Tuple, List
 from .colors import *
 from .utils import *
 plt.style.use('default')
@@ -83,6 +83,19 @@ def set_rcParams(params={}):
         'lines.markersize': 4,         # Marker size
     })
     plt.rcParams.update(params)
+
+
+##
+
+
+def order_from_index(df):
+    order = (
+        df.T
+        .sort_values(by=list(df.index), ascending=False)
+        .index
+        .tolist()
+    )
+    return order
 
 
 ##
@@ -787,7 +800,7 @@ def violin(
             data=df, x=x, y=y, ax=ax, 
             order=x_order, 
             color=color,
-            linewidth=width, 
+            linewidth=linewidth, 
             **params
         )
         
@@ -973,6 +986,7 @@ def dotplot(
     order_y: Iterable[str] = None, 
     color: str = None, 
     size: str = None, 
+    sizes_lim: Tuple[float, float] = (.001, 100), 
     palette: str = 'afmhot_r', 
     ax: matplotlib.axes.Axes = None, 
     vmin: float = None, 
@@ -992,7 +1006,7 @@ def dotplot(
                     palette=palette, 
                     ax=ax, 
                     hue_norm=matplotlib.colors.Normalize(vmin=vmin, vmax=vmax, clip=True),
-                    sizes=(.001, 100), 
+                    sizes=sizes_lim, 
                     edgecolor='k'
                     )
     
@@ -1009,8 +1023,9 @@ def volcano(
     df: pd.DataFrame, 
     x: str = 'log2FC', 
     y: str = '-log10p', 
+    labels: List[str] = None,
     xlim: Tuple[float, float] = (-2.5,2.5), 
-    ylim: float = 2, 
+    ylim: str|Tuple[float, float] = 2, 
     cmap: Dict[str, str|Any] = None, 
     ax: matplotlib.axes.Axes = None,
     fig: matplotlib.figure =None,
@@ -1044,10 +1059,17 @@ def volcano(
 
     x_ = df[x].copy()
     y_ = df[y].copy()
-    labels = list( 
-        set(x_[(x_<=xlim[0]) | (x_>=xlim[1])].index) & \
-        set(y_[y_>=ylim].index) 
-    )
+    if labels is None:
+        if isinstance(ylim, float):
+            test_y = set(y_[y_>=ylim].index)
+        elif isinstance(ylim, list) | isinstance(ylim, tuple):
+            test_y = set(y_[(y_<=ylim[0]) | (y_>=ylim[1])].index)
+        else:
+            raise ValueError('Pass a string, a list, or float.')
+        labels = list( 
+            set(x_[(x_<=xlim[0]) | (x_>=xlim[1])].index) & \
+            test_y
+        )
     test = x_.index.isin(labels)
     ax.scatter(x_.loc[~test], y_.loc[~test], marker='o', **params_others)
     ax.scatter(x_.loc[labels], y_.loc[labels], marker='o', **params_labelled)
