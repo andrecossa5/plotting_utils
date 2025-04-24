@@ -294,7 +294,7 @@ def format_ax(
     if xlabel is not None:
         ax.set(xlabel=xlabel)
     
-    if xlabel is not None:
+    if ylabel is not None:
         ax.set(ylabel=ylabel)
 
     if xticks is not None:

@@ -137,3 +137,33 @@ def update_params(d_original, d_passed):
 
 
 ##
+
+
+def save_best_pdf_quality(fig, figsize, path, name, dpi=1000):
+
+    import matplotlib.pyplot as plt
+    import io
+    from PIL import Image
+    import os
+
+    # Path to save the final PDF
+    path_pdf = os.path.join(path, name)
+
+    # Step 1: Render your figure as a high-DPI PNG in memory
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=dpi)
+    buf.seek(0)
+
+    # Step 2: Create a new PDF with the PNG embedded
+    fig2, ax = plt.subplots(figsize=figsize)  # Match your original figure size
+    img = Image.open(buf)
+    ax.imshow(img)
+    ax.axis('off')
+
+    # Step 3: Save to PDF
+    fig2.savefig(path_pdf, bbox_inches='tight', dpi=dpi)
+    buf.close()
+    plt.close(fig2)
+
+
+##
