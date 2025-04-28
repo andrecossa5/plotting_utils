@@ -574,16 +574,30 @@ def bar(
 
     # Handle colors and by
     if by is None:
-        sns.barplot(
-            data=df, x=x, y=y, ax=ax, 
-            order=x_order, 
-            color=color,
-            width=width,
-            alpha=alpha, 
-            edgecolor=edgecolor,
-            linewidth=linewidth,
-            **kwargs
-        )
+        if (isinstance(color, str) or color is None) and categorical_cmap is None:
+            sns.barplot(
+                data=df, x=x, y=y, ax=ax, 
+                order=x_order, 
+                color=color,
+                width=width,
+                alpha=alpha, 
+                edgecolor=edgecolor,
+                linewidth=linewidth,
+                **kwargs
+            )
+        elif isinstance(categorical_cmap, dict) and x_order is not None:
+            sns.barplot(
+                data=df, x=x, y=y, ax=ax, 
+                order=x_order, 
+                palette=[ categorical_cmap[x] for x in x_order ] ,
+                width=width,
+                alpha=alpha, 
+                edgecolor=edgecolor,
+                linewidth=linewidth,
+                **kwargs
+            )
+        else:
+            raise ValueError('With by as None, must give either a str color or a categorical_cmap and an x_order!')
         
     elif by is not None and by in df.columns:
         
@@ -591,7 +605,9 @@ def bar(
         if pd.api.types.is_string_dtype(df[by]) or df[by].dtype == 'category':
             
             if isinstance(categorical_cmap, str):
-                _cmap = create_palette(df, by, palette=categorical_cmap)
+                _cmap = create_palette(df, by, order=by_order, palette=categorical_cmap)
+            elif categorical_cmap is None:
+                _cmap = create_palette(df, by, order=by_order, palette='tab10')
             else:
                 _cmap = categorical_cmap
 
@@ -629,7 +645,7 @@ def box(
     y: str, 
     by: str = None, 
     color: str = None,
-    categorical_cmap: str|Dict[str,Any] = 'tab10', 
+    categorical_cmap: str|Dict[str,Any] = None, 
     x_order: Iterable[str] = None,
     add_stats: bool = False,
     pairs: Iterable[Iterable[str]] = None, 
@@ -654,21 +670,34 @@ def box(
     
     # Handle colors and by
     if by is None:
-        sns.boxplot(
-            data=df, x=x, y=y, ax=ax, 
-            order=x_order, 
-            color=color,
-            width=width, 
-            **params
-        )
-        
+        if (isinstance(color, str) or color is None) and categorical_cmap is None:
+            sns.boxplot(
+                data=df, x=x, y=y, ax=ax, 
+                order=x_order, 
+                color=color,
+                width=width, 
+                **params
+            )
+        elif isinstance(categorical_cmap, dict) and x_order is not None:
+            sns.boxplot(
+                data=df, x=x, y=y, ax=ax, 
+                order=x_order, 
+                palette=[ categorical_cmap[x] for x in x_order ] ,
+                width=width, 
+                **params
+            )
+        else:
+            raise ValueError('With by as None, must give either str color or a categorical_cmap and an x_order!')
+ 
     elif by is not None and by in df.columns:
         
         # Categorical
         if pd.api.types.is_string_dtype(df[by]) or df[by].dtype == 'category':
             
             if isinstance(categorical_cmap, str):
-                _cmap = create_palette(df, by, palette=categorical_cmap)
+                _cmap = create_palette(df, by, order=by_order, palette=categorical_cmap)
+            elif categorical_cmap is None:
+                _cmap = create_palette(df, by, order=by_order, palette='tab10')
             else:
                 _cmap = categorical_cmap
 
@@ -705,7 +734,7 @@ def strip(
     color: str = None,
     edgecolor: str = 'k',
     linewidth: float = .1,
-    categorical_cmap: str|Dict[str,Any] = 'tab10', 
+    categorical_cmap: str|Dict[str,Any] = None, 
     x_order: Iterable[str] = None,
     add_stats: bool = False,
     pairs: Iterable[Iterable[str]] = None, 
@@ -722,23 +751,38 @@ def strip(
     
     # Handle colors and by
     if by is None:
-        sns.stripplot(
-            data=df, x=x, y=y, ax=ax, 
-            order=x_order, 
-            color=color,
-            edgecolor=edgecolor,
-            linewidth=linewidth,
-            size=size,
-            **kwargs
-        )
-        
+        if (isinstance(color, str) or color is None) and categorical_cmap is None:
+            sns.stripplot(
+                data=df, x=x, y=y, ax=ax, 
+                order=x_order, 
+                color=color,
+                edgecolor=edgecolor,
+                linewidth=linewidth,
+                size=size,
+                **kwargs
+            )
+        elif isinstance(categorical_cmap, dict) and x_order is not None:
+            sns.stripplot(
+                data=df, x=x, y=y, ax=ax, 
+                order=x_order, 
+                palette=[ categorical_cmap[x] for x in x_order ] ,
+                edgecolor=edgecolor,
+                linewidth=linewidth,
+                size=size,
+                **kwargs
+            )
+        else:
+            raise ValueError('With by as None, must give either str color or a categorical_cmap and an x_order!')
+
     elif by is not None and by in df.columns:
         
         # Categorical
         if pd.api.types.is_string_dtype(df[by]) or df[by].dtype == 'category':
             
             if isinstance(categorical_cmap, str):
-                _cmap = create_palette(df, by, palette=categorical_cmap)
+                _cmap = create_palette(df, by, order=by_order, palette=categorical_cmap)
+            elif categorical_cmap is None:
+                _cmap = create_palette(df, by, order=by_order, palette='tab10')
             else:
                 _cmap = categorical_cmap
 
@@ -796,13 +840,24 @@ def violin(
 
     # Handle colors and by
     if by is None:
-        sns.violinplot(
-            data=df, x=x, y=y, ax=ax, 
-            order=x_order, 
-            color=color,
-            linewidth=linewidth, 
-            **params
-        )
+        if (isinstance(color, str) or color is None) and categorical_cmap is None:
+            sns.violinplot(
+                data=df, x=x, y=y, ax=ax, 
+                order=x_order, 
+                color=color,
+                linewidth=linewidth, 
+                **params
+            )
+        elif isinstance(categorical_cmap, dict) and x_order is not None:
+            sns.violinplot(
+                data=df, x=x, y=y, ax=ax, 
+                order=x_order, 
+                palette=[ categorical_cmap[x] for x in x_order ] ,
+                linewidth=linewidth, 
+                **params
+            )
+        else:
+            raise ValueError('With by as None, must give either a str color or a categorical_cmap and an x_order!')
         
     elif by is not None and by in df.columns:
         
@@ -810,7 +865,9 @@ def violin(
         if pd.api.types.is_string_dtype(df[by]) or df[by].dtype == 'category':
             
             if isinstance(categorical_cmap, str):
-                _cmap = create_palette(df, by, palette=categorical_cmap)
+                _cmap = create_palette(df, by, order=by_order, palette=categorical_cmap)
+            elif categorical_cmap is None:
+                _cmap = create_palette(df, by, order=by_order, palette='tab10')
             else:
                 _cmap = categorical_cmap
 
